@@ -27,7 +27,7 @@ const ContractItem = ({ name, idx = 0 }: { name: string; idx: number }) => {
   const ref = React.createRef<HTMLDivElement>();
   useEffect(() => {
     if (isActive) {
-      ref.current.scrollIntoView({ block: "ближайший" });
+      ref.current.scrollIntoView({ block: "nearest" });
     }
   }, [isActive]);
 
