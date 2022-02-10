@@ -28,7 +28,7 @@ const FunctionItem = ({ fn, isActive, onClick }: IProps) => {
   const ref = React.createRef<HTMLDivElement>();
   useEffect(() => {
     if (isActive) {
-      ref.current.scrollIntoView({ block: "near" });
+      ref.current.scrollIntoView({ block: "nearest" });
     }
   }, [isActive]);
 
