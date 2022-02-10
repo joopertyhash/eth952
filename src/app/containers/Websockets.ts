@@ -9,19 +9,19 @@ function useWebsockets() {
   const setup = () => {
     const ws = new WebSocket(`ws://${window.location.host}`);
     // Connection opened
-    ws.addEventListener("открыть", function () {
-      const data = JSON.stringify({ type: "СОЕДИНЕНИЕ ОТКРЫТО" });
+    ws.addEventListener("open", function () {
+      const data = JSON.stringify({ type: "CONNECTION_OPENED" });
       ws.send(data);
     });
 
     // Listen for messages
-    ws.addEventListener("сообщение", function (event) {
+    ws.addEventListener("message", function (event) {
       const data = JSON.parse(event.data);
-      if (data.type === "НОВЫЙ КОНТРАКТ" || data.type === "СМЕНИТЬ КОНТРАКТ") {
+      if (data.type === "NEW_CONTRACT" || data.type === "CHANGE_CONTRACT") {
         // upsert the specified contract by path
         upsertByPath(data.artifact, data.name, data.path);
       }
-      if (data.type === "УДАЛИТЬ КОНТРАКТ") {
+      if (data.type === "DELETE_CONTRACT") {
         // remove the specified contract by path
         removeByPath(data.path);
       }
