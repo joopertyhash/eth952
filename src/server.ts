@@ -31,9 +31,9 @@ const startServer = async ({ port, paths = [], artifactPath }: IServer) => {
   const server = http.createServer(app);
   const wss = new WebSocket.Server({ clientTracking: false, noServer: true });
 
-  server.on("обновить", function (request, socket, head) {
+  server.on("upgrade", function (request, socket, head) {
     wss.handleUpgrade(request, socket, head, function (ws) {
-      wss.emit("соединение", ws, request);
+      wss.emit("connection", ws, request);
     });
   });
 
@@ -45,13 +45,13 @@ const startServer = async ({ port, paths = [], artifactPath }: IServer) => {
   if (artifactPath) {
     chokidar
       .watch(`${artifactPath}/*.json`)
-      .on("добавить", (filePath) => {
+      .on("add", (filePath) => {
         const rawJson = fs.readFileSync(filePath);
         if (sender && validateRawArtifact(rawJson)) {
-          log.info(`Новый контракт: ${path.basename(filePath)}`);
+          log.info(`New contract: ${path.basename(filePath)}`);
           const artifact = JSON.parse(rawJson.toString());
           const payload = {
-            type: "НОВЫЙ КОНТРАКТ",
+            type: "NEW_CONTRACT",
             artifact,
             path: filePath,
             name: removeExtension(path.basename(filePath)),
@@ -59,13 +59,13 @@ const startServer = async ({ port, paths = [], artifactPath }: IServer) => {
           sender.send(JSON.stringify(payload));
         }
       })
-      .on("смена", (filePath) => {
+      .on("change", (filePath) => {
         const rawJson = fs.readFileSync(filePath);
         if (sender && validateRawArtifact(rawJson)) {
-          log.info(`Контракт изменен: ${path.basename(filePath)}`);
+          log.info(`Contract changed: ${path.basename(filePath)}`);
           const artifact = JSON.parse(rawJson.toString());
           const payload = {
-            type: "СМЕНА КОТРАКТА",
+            type: "CHANGE_CONTRACT",
             artifact,
             path: filePath,
             name: removeExtension(path.basename(filePath)),
@@ -73,11 +73,11 @@ const startServer = async ({ port, paths = [], artifactPath }: IServer) => {
           sender.send(JSON.stringify(payload));
         }
       })
-      .on("ссылка", (filePath) => {
+      .on("unlink", (filePath) => {
         if (sender) {
-          log.info(`Контракт удален: ${path.basename(filePath)}`);
+          log.info(`Contract deleted: ${path.basename(filePath)}`);
           const payload = {
-            type: "УДАЛИТЬ КОНТРАКТ",
+            type: "DELETE_CONTRACT",
             path: filePath,
           };
           sender.send(JSON.stringify(payload));
@@ -85,11 +85,11 @@ const startServer = async ({ port, paths = [], artifactPath }: IServer) => {
       });
   }
 
-  wss.on("соединения", function (ws) {
+  wss.on("connection", function (ws) {
     sender = ws;
-    ws.on("сообщение", function (message) {
+    ws.on("message", function (message) {
       const msg = JSON.parse(message as string);
-      if (msg.type === "СОЕДИНЕНИЕ ОТКРЫТО" && artifactPath) {
+      if (msg.type === "CONNECTION_OPENED" && artifactPath) {
         // load initial state (i.e. send all valid files over)
         const jsonFilePaths = getJsonFilePaths(artifactPath);
 
@@ -99,7 +99,7 @@ const startServer = async ({ port, paths = [], artifactPath }: IServer) => {
           if (validateRawArtifact(rawJson)) {
             const artifact = JSON.parse(rawJson.toString());
             const payload = {
-              type: "НОВЫЙ КОНТРАКТ",
+              type: "NEW_CONTRACT",
               artifact,
               path: filePath,
               name: removeExtension(path.basename(filePath)),
@@ -108,18 +108,18 @@ const startServer = async ({ port, paths = [], artifactPath }: IServer) => {
             count++;
           }
         });
-        log.info(`Отправить ${count} договор(ы) с клиентом`);
+        log.info(`Sent ${count} contract(s) to client`);
       }
     });
 
-    ws.on("закрыть", function () {
+    ws.on("close", function () {
       // console.log("Websocket connection closed.");
     });
   });
 
   server.listen(port, function () {
     log.success(
-      `Ваша приборная доска готова: ${chalk.yellow(`http://localhost:${port}`)}`,
+      `Your dashboard is ready at: ${chalk.yellow(`http://localhost:${port}`)}`,
     );
   });
 };
